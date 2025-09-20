@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Secure Advanced Database</title>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #1e1e2f;
+      color: #f5f5f5;
+    }
+    header {
+      background: linear-gradient(90deg, #4cafef, #007acc);
+      color: #fff;
+      padding: 15px;
+      text-align: center;
+      font-size: 1.5rem;
+      font-weight: 600;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    }
+    #toolbar {
+      background: #2a2a3d;
+      padding: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      border-bottom: 1px solid #444;
+    }
+    #toolbar button {
+      padding: 8px 14px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      background: #3f3f55;
+      color: white;
+      font-size: 0.9rem;
+      transition: all 0.2s ease;
+    }
+    #toolbar button:hover {
+      background: #4cafef;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    }
+    #workspace {
+      padding: 20px;
+      background: #2a2a3d;
+      height: 80vh;
+      overflow-y: auto;
+      border-radius: 0 0 10px 10px;
+      margin: 0 auto;
+      width: 90%;
+      max-width: 1200px;
+      box-shadow: inset 0 0 10px rgba(0,0,0,0.6);
+    }
+    .table-editor {
+      border-collapse: collapse;
+      margin: 15px 0;
+      width: 100%;
+      background: #1e1e2f;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .table-editor td, .table-editor th {
+      border: 1px solid #555;
+      padding: 10px;
+      min-width: 80px;
+      text-align: center;
+      color: #fff;
+    }
+    .box {
+      border: 2px solid #4cafef;
+      border-radius: 8px;
+      padding: 15px;
+      margin: 15px 0;
+      background: #252540;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    }
+    p{
+        text-align: center;
+        font-size: 1.2rem;
+        margin-top: 15px;
+    }
+  </style>
+</head>
+<body>
+  <header>🔒 Secure Advanced Database </header>
+   <p> This website is made  for </p>
+  <div id="toolbar">
+    <button id="unlockBtn" onclick="unlockEditor()"> Unlock Editor</button>
+    <button id="saveBtn" onclick="saveNote()">Save</button>
+    <button id="loadBtn" onclick="loadNote()">Open</button>
+    <button id="downloadBtn" onclick="downloadNote()">Download</button>
+    <button id="tableBtn" onclick="insertTable()">Insert Table</button>
+    <button id="boxBtn" onclick="insertBox()">Insert Box</button>
+    <button id="clearBtn" onclick="clearWorkspace()">Clear</button>
+  </div>
+  <div id="workspace"></div>
+
+  <script>
+    const workspace = document.getElementById('workspace');
+    const MY_KEY = 'kalu'; // Change to your secret key
+    const toolbarButtons = document.querySelectorAll('#toolbar button');
+
+    function setReadOnlyMode(){
+      workspace.contentEditable = 'false';
+      toolbarButtons.forEach(btn => {
+        if(btn.id !== 'unlockBtn') btn.style.display = 'none';
+      });
+    }
+
+    function unlockEditor(){
+      const inputKey = prompt("Enter your secret key to unlock ");
+      if(inputKey === MY_KEY){
+        localStorage.setItem('notepadUserKey', inputKey);
+        workspace.contentEditable = 'true';
+        workspace.innerHTML = localStorage.getItem('notepadContent') || '';
+        toolbarButtons.forEach(btn => btn.style.display = 'inline-block');
+        alert('✅ Editor unlocked!');
+      } else {
+        alert('❌ Wrong key.');
+      }
+    }
+
+    function checkAccess(){
+      const storedKey = localStorage.getItem('notepadUserKey');
+      workspace.innerHTML = localStorage.getItem('notepadContent') || 'No content yet.';
+      if(storedKey === MY_KEY){
+        workspace.contentEditable = 'true';
+        toolbarButtons.forEach(btn => btn.style.display = 'inline-block');
+      } else {
+        workspace.contentEditable = 'false';
+        toolbarButtons.forEach(btn => {
+          if(btn.id !== 'unlockBtn') btn.style.display = 'none';
+        });
+      }
+    }
+
+    function saveNote(){
+      if(workspace.contentEditable === 'true'){
+        localStorage.setItem('notepadContent', workspace.innerHTML);
+        alert('✅ Note saved!');
+      } else {
+        alert('🔒 Unlock editor first!');
+      }
+    }
+
+    function loadNote(){
+      workspace.innerHTML = localStorage.getItem('notepadContent') || workspace.innerHTML;
+    }
+
+    function downloadNote(){
+      if(workspace.contentEditable === 'true'){
+        const blob = new Blob([workspace.innerHTML], { type: 'text/html' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'note.html';
+        a.click();
+      }
+    }
+
+    function insertTable(){
+      if(workspace.contentEditable !== 'true') return;
+      const rows = prompt("Enter number of rows:");
+      const cols = prompt("Enter number of columns:");
+      if (!rows || !cols) return;
+      let table = document.createElement('table');
+      table.className = 'table-editor';
+      for(let i=0;i<rows;i++){
+        let tr = document.createElement('tr');
+        for(let j=0;j<cols;j++){
+          let td = document.createElement('td');
+          td.contentEditable = 'true';
+          td.innerText = `Cell ${i+1}-${j+1}`;
+          tr.appendChild(td);
+        }
+        table.appendChild(tr);
+      }
+      workspace.appendChild(table);
+    }
+
+    function insertBox(){
+      if(workspace.contentEditable !== 'true') return;
+      let div = document.createElement('div');
+      div.className = 'box';
+      div.contentEditable = 'true';
+      div.innerText = 'Editable Box - type here...';
+      workspace.appendChild(div);
+    }
+
+    function clearWorkspace(){
+      if(workspace.contentEditable !== 'true') return;
+      if(confirm('Clear all content?')) workspace.innerHTML = '';
+    }
+
+    // Initialize
+    checkAccess();
+  </script>
+</body>
+</html>

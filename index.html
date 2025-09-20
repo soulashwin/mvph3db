@@ -1,203 +1,319 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Secure Advanced Database</title>
+  <meta charset="utf-8" />
+  <title>Advanced Notepad → Google Docs</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <style>
-    body {
-      font-family: 'Inter', sans-serif;
-      margin: 0;
-      padding: 0;
-      background: #1e1e2f;
-      color: #f5f5f5;
+    :root{
+      --bg:#1e1e2f; --panel:#2a2a3d; --accent:#4cafef; --card:#252540; --text:#f5f5f5;
     }
-    header {
-      background: linear-gradient(90deg, #4cafef, #007acc);
-      color: #fff;
-      padding: 15px;
-      text-align: center;
-      font-size: 1.5rem;
-      font-weight: 600;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
-    }
-    #toolbar {
-      background: #2a2a3d;
-      padding: 10px;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      justify-content: center;
-      border-bottom: 1px solid #444;
-    }
-    #toolbar button {
-      padding: 8px 14px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      background: #3f3f55;
-      color: white;
-      font-size: 0.9rem;
-      transition: all 0.2s ease;
-    }
-    #toolbar button:hover {
-      background: #4cafef;
-      transform: translateY(-2px);
-      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-    }
-    #workspace {
-      padding: 20px;
-      background: #2a2a3d;
-      height: 80vh;
-      overflow-y: auto;
-      border-radius: 0 0 10px 10px;
-      margin: 0 auto;
-      width: 90%;
-      max-width: 1200px;
-      box-shadow: inset 0 0 10px rgba(0,0,0,0.6);
-    }
-    .table-editor {
-      border-collapse: collapse;
-      margin: 15px 0;
-      width: 100%;
-      background: #1e1e2f;
-      border-radius: 6px;
-      overflow: hidden;
-    }
-    .table-editor td, .table-editor th {
-      border: 1px solid #555;
-      padding: 10px;
-      min-width: 80px;
-      text-align: center;
-      color: #fff;
-    }
-    .box {
-      border: 2px solid #4cafef;
-      border-radius: 8px;
-      padding: 15px;
-      margin: 15px 0;
-      background: #252540;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-    }
-    p{
-        text-align: center;
-        font-size: 1.2rem;
-        margin-top: 15px;
-    }
+    body{font-family:Inter,system-ui,Arial,sans-serif;margin:0;background:var(--bg);color:var(--text)}
+    header{background:linear-gradient(90deg,var(--accent),#007acc);padding:12px;text-align:center;font-weight:700}
+    #toolbar{display:flex;flex-wrap:wrap;gap:8px;padding:10px;justify-content:center;background:var(--panel);}
+    #toolbar button,#toolbar select,#toolbar input{padding:6px 10px;border-radius:6px;border:none;background:#3f3f55;color:#fff;cursor:pointer}
+    #toolbar button:hover{background:var(--accent)}
+    #container{width:92%;max-width:1100px;margin:16px auto}
+    #topbar{display:flex;gap:8px;justify-content:space-between;align-items:center;margin-bottom:10px}
+    #editor-wrap{background:var(--card);padding:14px;border-radius:8px;min-height:420px}
+    #workspace{min-height:320px;outline:none}
+    input[type="text"]{padding:8px;border-radius:6px;border:none;width:300px}
+    .table-editor{border-collapse:collapse;margin:12px 0;width:100%;background:#1e1e2f}
+    .table-editor td{border:1px solid #555;padding:10px;color:#fff;min-width:70px;text-align:center}
+    .selected{outline:3px solid var(--accent)}
+    .small{font-size:0.9rem;padding:6px}
+    #status{font-size:0.9rem;color:#ddd}
   </style>
 </head>
 <body>
-  <header>🔒 Secure Advanced Database </header>
-   <p> This website is made  for </p>
+  <header>🔐 Advanced Notepad — Google Docs Sync</header>
+
   <div id="toolbar">
-    <button id="unlockBtn" onclick="unlockEditor()"> Unlock Editor</button>
-    <button id="saveBtn" onclick="saveNote()">Save</button>
-    <button id="loadBtn" onclick="loadNote()">Open</button>
-    <button id="downloadBtn" onclick="downloadNote()">Download</button>
-    <button id="tableBtn" onclick="insertTable()">Insert Table</button>
-    <button id="boxBtn" onclick="insertBox()">Insert Box</button>
-    <button id="clearBtn" onclick="clearWorkspace()">Clear</button>
+    <!-- Password / lock -->
+    <button id="unlockBtn">Unlock Editor</button>
+    <button id="lockBtn" style="display:none">Lock Editor</button>
+
+    <!-- Text tools -->
+    <button onclick="formatText('bold')">Bold</button>
+    <button onclick="formatText('italic')">Italic</button>
+    <button onclick="formatText('underline')">Underline</button>
+    <select onchange="formatText('fontSize', this.value)">
+      <option value="">Size</option>
+      <option value="1">Small</option>
+      <option value="3">Normal</option>
+      <option value="5">Large</option>
+      <option value="7">Huge</option>
+    </select>
+    <input type="color" onchange="formatText('foreColor', this.value)" title="Text Color">
+    <input type="color" onchange="formatText('hiliteColor', this.value)" title="Highlight">
+
+    <!-- Tax (text size global) -->
+    <button onclick="adjustFontSize(1)">Tax +</button>
+    <button onclick="adjustFontSize(-1)">Tax -</button>
+
+    <!-- Table -->
+    <button onclick="insertTable()">Insert Table</button>
+    <button onclick="deleteTable()">Delete Table</button>
+    <button onclick="addRow()">Add Row</button>
+    <button onclick="deleteRow()">Delete Row</button>
+    <button onclick="addColumn()">Add Column</button>
+    <button onclick="deleteColumn()">Delete Column</button>
+
+    <!-- Google -->
+    <button id="authorizeBtn">Authorize Google</button>
+    <button id="createBtn">Create to Docs</button>
+    <button id="updateBtn">Update Last Doc</button>
+    <button id="listBtn">List My Drive</button>
+
+    <a id="signout" href="/signout" style="color:#fff;padding:6px 8px;border-radius:6px;background:#6b6b83;text-decoration:none">Sign out</a>
   </div>
-  <div id="workspace"></div>
 
-  <script>
-    const workspace = document.getElementById('workspace');
-    const MY_KEY = 'kalu'; // Change to your secret key
-    const toolbarButtons = document.querySelectorAll('#toolbar button');
+  <div id="container">
+    <div id="topbar">
+      <input id="title" type="text" placeholder="Document title (for create)" />
+      <div id="status">Status: <span id="stText">Not authorized</span></div>
+    </div>
 
-    function setReadOnlyMode(){
-      workspace.contentEditable = 'false';
-      toolbarButtons.forEach(btn => {
-        if(btn.id !== 'unlockBtn') btn.style.display = 'none';
-      });
+    <div id="editor-wrap">
+      <div id="workspace" contenteditable="false">
+        <p style="margin:0">Unlock to edit. This editor supports rich text, tables and basic formatting.</p>
+      </div>
+    </div>
+  </div>
+
+<script>
+/* ---------- CONFIG ---------- */
+const EDIT_PASSWORD = "kalu"; // change as you like
+/* ---------------------------- */
+
+const workspace = document.getElementById("workspace");
+const toolbarBtns = document.querySelectorAll("#toolbar button, #toolbar select, #toolbar input[type='color']");
+const unlockBtn = document.getElementById("unlockBtn");
+const lockBtn = document.getElementById("lockBtn");
+const authorizeBtn = document.getElementById("authorizeBtn");
+const createBtn = document.getElementById("createBtn");
+const updateBtn = document.getElementById("updateBtn");
+const listBtn = document.getElementById("listBtn");
+const stText = document.getElementById("stText");
+
+// Keep certain controls hidden until unlocked
+function setReadOnlyMode(){
+  workspace.contentEditable = "false";
+  // hide all controls except unlock and authorize/signout
+  toolbarBtns.forEach(btn => {
+    if (btn.id === "unlockBtn" || btn.id === "authorizeBtn" || btn.id==="signout") {
+      btn.style.display = "inline-block";
+    } else {
+      btn.style.display = "none";
     }
+  });
+  lockBtn.style.display = "none";
+  unlockBtn.style.display = "inline-block";
+}
 
-    function unlockEditor(){
-      const inputKey = prompt("Enter your secret key to unlock ");
-      if(inputKey === MY_KEY){
-        localStorage.setItem('notepadUserKey', inputKey);
-        workspace.contentEditable = 'true';
-        workspace.innerHTML = localStorage.getItem('notepadContent') || '';
-        toolbarButtons.forEach(btn => btn.style.display = 'inline-block');
-        alert('✅ Editor unlocked!');
-      } else {
-        alert('❌ Wrong key.');
-      }
+function setEditMode(){
+  workspace.contentEditable = "true";
+  toolbarBtns.forEach(btn => btn.style.display = "inline-block");
+  unlockBtn.style.display = "none";
+  lockBtn.style.display = "inline-block";
+}
+
+// Initialize mode based on localStorage
+function checkAccess(){
+  const stored = localStorage.getItem("notepadUserKey");
+  const savedContent = localStorage.getItem("notepadContent");
+  if(savedContent) workspace.innerHTML = savedContent;
+  if(stored === EDIT_PASSWORD){
+    setEditMode();
+  } else {
+    setReadOnlyMode();
+  }
+}
+
+unlockBtn.addEventListener("click", () => {
+  const input = prompt("Enter password to unlock:");
+  if(input === EDIT_PASSWORD){
+    localStorage.setItem("notepadUserKey", input);
+    alert("✅ Unlocked");
+    setEditMode();
+  } else {
+    alert("❌ Wrong password — view only.");
+  }
+});
+
+lockBtn.addEventListener("click", () => {
+  localStorage.removeItem("notepadUserKey");
+  setReadOnlyMode();
+  alert("🔒 Locked");
+});
+
+// Save/load functions (still keep localStorage as fallback)
+function saveLocal(){
+  if(workspace.contentEditable === "true"){
+    localStorage.setItem("notepadContent", workspace.innerHTML);
+    alert("✅ Saved locally");
+  } else {
+    alert("🔒 Unlock to save");
+  }
+}
+
+function loadLocal(){
+  const c = localStorage.getItem("notepadContent");
+  if(c) workspace.innerHTML = c;
+}
+
+/* TEXT FORMATTING */
+function formatText(command, value=null){
+  document.execCommand(command, false, value);
+}
+
+/* TAX = global font size adjust */
+function adjustFontSize(delta){
+  const style = window.getComputedStyle(workspace).getPropertyValue("font-size");
+  const current = parseFloat(style) || 16;
+  workspace.style.fontSize = (current + delta*2) + "px";
+}
+
+/* TABLE MANAGEMENT */
+let selectedTable = null;
+document.addEventListener("click", e => {
+  const t = e.target.closest("table");
+  if(t){
+    if(selectedTable) selectedTable.classList.remove("selected");
+    selectedTable = t;
+    selectedTable.classList.add("selected");
+  } else {
+    if(selectedTable) selectedTable.classList.remove("selected");
+    selectedTable = null;
+  }
+});
+
+function insertTable(){
+  if(workspace.contentEditable !== "true") return alert("Unlock to edit");
+  const rows = parseInt(prompt("Rows:", 2));
+  const cols = parseInt(prompt("Cols:", 2));
+  if(!rows || !cols) return;
+  const table = document.createElement("table");
+  table.className = "table-editor";
+  for(let i=0;i<rows;i++){
+    const tr = document.createElement("tr");
+    for(let j=0;j<cols;j++){
+      const td = document.createElement("td");
+      td.contentEditable = "true";
+      td.innerText = `Cell ${i+1}-${j+1}`;
+      tr.appendChild(td);
     }
+    table.appendChild(tr);
+  }
+  workspace.appendChild(table);
+}
 
-    function checkAccess(){
-      const storedKey = localStorage.getItem('notepadUserKey');
-      workspace.innerHTML = localStorage.getItem('notepadContent') || 'No content yet.';
-      if(storedKey === MY_KEY){
-        workspace.contentEditable = 'true';
-        toolbarButtons.forEach(btn => btn.style.display = 'inline-block');
-      } else {
-        workspace.contentEditable = 'false';
-        toolbarButtons.forEach(btn => {
-          if(btn.id !== 'unlockBtn') btn.style.display = 'none';
-        });
-      }
+function deleteTable(){
+  if(workspace.contentEditable !== "true") return alert("Unlock to edit");
+  if(selectedTable){
+    selectedTable.remove();
+    selectedTable = null;
+  } else alert("Select a table first");
+}
+
+function addRow(){
+  if(workspace.contentEditable !== "true") return alert("Unlock to edit");
+  if(!selectedTable) return alert("Select a table first");
+  const cols = selectedTable.rows[0].cells.length;
+  const tr = document.createElement("tr");
+  for(let i=0;i<cols;i++){
+    const td = document.createElement("td");
+    td.contentEditable = "true";
+    td.innerText = "New Cell";
+    tr.appendChild(td);
+  }
+  selectedTable.appendChild(tr);
+}
+
+function deleteRow(){
+  if(workspace.contentEditable !== "true") return alert("Unlock to edit");
+  if(!selectedTable) return alert("Select a table first");
+  if(selectedTable.rows.length>0) selectedTable.deleteRow(-1);
+}
+
+function addColumn(){
+  if(workspace.contentEditable !== "true") return alert("Unlock to edit");
+  if(!selectedTable) return alert("Select a table first");
+  for(const r of selectedTable.rows){
+    const td = document.createElement("td");
+    td.contentEditable = "true";
+    td.innerText = "New Col";
+    r.appendChild(td);
+  }
+}
+
+function deleteColumn(){
+  if(workspace.contentEditable !== "true") return alert("Unlock to edit");
+  if(!selectedTable) return alert("Select a table first");
+  const colCount = selectedTable.rows[0].cells.length;
+  if(colCount>0){
+    for(const r of selectedTable.rows) r.deleteCell(-1);
+  }
+}
+
+/* GOOGLE DOCS INTEGRATION */
+// Update UI based on authorization state by calling /list_my_doc (simple probe)
+async function checkAuthStatus(){
+  try {
+    const res = await fetch("/list_my_doc");
+    if(res.status === 401){
+      stText.innerText = "Not authorized";
+    } else {
+      stText.innerText = "Authorized";
     }
+  } catch(e){
+    stText.innerText = "Unknown";
+  }
+}
+checkAuthStatus();
 
-    function saveNote(){
-      if(workspace.contentEditable === 'true'){
-        localStorage.setItem('notepadContent', workspace.innerHTML);
-        alert('✅ Note saved!');
-      } else {
-        alert('🔒 Unlock editor first!');
-      }
-    }
+authorizeBtn.addEventListener("click", () => { window.location = "/authorize"; });
 
-    function loadNote(){
-      workspace.innerHTML = localStorage.getItem('notepadContent') || workspace.innerHTML;
-    }
+createBtn.addEventListener("click", async () => {
+  const title = document.getElementById("title").value || "My Note";
+  const content = workspace.innerText || "";
+  const res = await fetch("/create_or_update_doc", {
+    method: "POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({title, content, mode:"create"})
+  });
+  const data = await res.json();
+  if(data.url){ alert("Created: " + data.url); window.open(data.url, "_blank"); checkAuthStatus(); }
+  else alert("Error: " + JSON.stringify(data));
+});
 
-    function downloadNote(){
-      if(workspace.contentEditable === 'true'){
-        const blob = new Blob([workspace.innerHTML], { type: 'text/html' });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = 'note.html';
-        a.click();
-      }
-    }
+updateBtn.addEventListener("click", async () => {
+  const content = workspace.innerText || "";
+  const res = await fetch("/create_or_update_doc", {
+    method: "POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({content, mode:"update"})
+  });
+  const data = await res.json();
+  if(data.url){ alert("Updated: " + data.url); window.open(data.url, "_blank"); checkAuthStatus(); }
+  else alert("Error: " + JSON.stringify(data));
+});
 
-    function insertTable(){
-      if(workspace.contentEditable !== 'true') return;
-      const rows = prompt("Enter number of rows:");
-      const cols = prompt("Enter number of columns:");
-      if (!rows || !cols) return;
-      let table = document.createElement('table');
-      table.className = 'table-editor';
-      for(let i=0;i<rows;i++){
-        let tr = document.createElement('tr');
-        for(let j=0;j<cols;j++){
-          let td = document.createElement('td');
-          td.contentEditable = 'true';
-          td.innerText = `Cell ${i+1}-${j+1}`;
-          tr.appendChild(td);
-        }
-        table.appendChild(tr);
-      }
-      workspace.appendChild(table);
-    }
+listBtn.addEventListener("click", async () => {
+  const res = await fetch("/list_my_doc");
+  const data = await res.json();
+  alert(JSON.stringify(data, null, 2));
+});
 
-    function insertBox(){
-      if(workspace.contentEditable !== 'true') return;
-      let div = document.createElement('div');
-      div.className = 'box';
-      div.contentEditable = 'true';
-      div.innerText = 'Editable Box - type here...';
-      workspace.appendChild(div);
-    }
+/* Save shortcut - ctrl+s for local save when editable */
+window.addEventListener("keydown", e => {
+  if((e.ctrlKey || e.metaKey) && e.key === "s"){
+    e.preventDefault();
+    saveLocal();
+  }
+});
 
-    function clearWorkspace(){
-      if(workspace.contentEditable !== 'true') return;
-      if(confirm('Clear all content?')) workspace.innerHTML = '';
-    }
-
-    // Initialize
-    checkAccess();
-  </script>
+checkAccess();
+</script>
 </body>
 </html>
